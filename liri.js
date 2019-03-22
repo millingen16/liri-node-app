@@ -1,137 +1,151 @@
 require("dotenv").config();
+const keys = require("./keys");
+const fs = require("fs");
+const Spotify = require("node-spotify-api");
+const spotify = new Spotify(keys.spotify);
+// const request = require("request");
+const axios = require("axios");
+const moment = require("moment");
+const colors = require("colors");
+const userChoice = process.argv[2];
+const userInput = process.argv[3];
 
-var keys = require("./keys.js");
-var spotify = new Spotify(keys.spotify);
-var fs = require("fs");
-var axios = require("axios");
-var spotify = require("node-spotify-api");
+// inPut(userChoice, userInput);
+// console.log(inPut);
 
-var argv1 = process.argv[2];
-var argv2 = process.argv[3];
 
-function commands(argv1, argv2) {
-    switch (argv1) {
+function input(userChoice, userInput) {
+    switch(userChoice) {
         case "concert-this":
-        concertThis(argv2);
-        break;
-
-            case "spotify-this-song":
-            spotifyThisSong(argv2);
+        concertInfomation(userInput);
             break;
-
-                case "movie-this":
-                movieThis(argv2);
-                break;
-
-                    case "do-what-it-says":
-                    doWhatItSays(argv2);
-                    break;
-
-                    default:
-
-                    console.log("This is a test");
+        case "spotify-this-song":
+        songInformation(userInput);
+            break;
+        case "movie-this":
+        movieInformation(userInput);
+            break;
+        case "do-what-it-says":
+        saySomething(userInput);
+            break;
+        default:
+            console.log(colors.red("Test"));
     }
 }
 
-commands(argv1, argv2);
+function concertInfomation(userInput) {
+    var queryUrl = "https://rest.bandsintown.com/artists/" + userInput + "/events?app_id=codingbootcamp";
+    console.log(colors.red(queryUrl));
+    axios.get(queryUrl).then(function(response) {
+        console.log(colors.green("\-----------------------------\n"));
+        console.log(colors.yellow("Name Of Venue: " + response.data[0].venue.name.white + "\r\n"));
+        console.log(colors.yellow("Venue Location: " + response.data[0].venue.city.white + "\r\n"));
+        console.log(colors.yellow("Date Of Event: " + moment(response.data[0].datetime).format("MM/DD/YYYY").white + "\r\n"));
 
-function concertThis() {
-    var band = "";
-    var queryUrl = "https://rest.bandsintown.com/artists/" + argv2 + "/events?app_id=codingbootcamp";
-    console.log(queryUrl);
-    axios.get(queryUrl).then(function() {
-        if(error.response) {
-            for(var i = 0; i < band.length; i++) {
-                band = JSON.stringify();
-                fs.appendFile("log.txt" +  band[i].nameOfVenue + '\n');
-                console.log("Name Of Venue " + band[i].nameOfVenue);
-                fs.appendFile("log.txt" + band[i].venueLocation + "\n");
-                console.log("Venue Location " + band[i].venueLocation);
-                fs.appendFile("log.txt" + band[i].date + "\n");
-                console.log("Date Of The Event " + band[i].date);
+        var bandLog = "\n*******Concert Log******** " + 
+            "\nName of Venue:" + response.data[0].venue.name +
+            "\nVenue Location: " + response.data[0].venue.city +
+            "\nDate of Event: " + moment(response.data[0].datetime).format("MM/DD/YYYY").white + 
+            "\n*******End Of Log*******";
+
+
+        fs.appendFile("log.txt", bandLog, function(err) {
+            if(err)
+            throw err;
+        });
+    });
+}
+
+
+
+
+
+
+function songInformation(userInput) {
+if(!userInput) {
+    userInput = "The Sign by Ace of Base.";
+}
+
+spotify.search({
+        type: "track",
+        query: userInput,
+    }, function(err, data) {
+        console.log(data);
+        if(err) {
+            return console.log(colors.red("Error occurred: " + err));
+        }
+        console.log(colors.green("\-----------------------------\n"));
+        console.log(colors.yellow("Artist: " + data.tracks.items[0].artists[0].name.white));
+        console.log(colors.yellow("Song: " + data.tracks.items[0].name.white));
+        console.log(colors.yellow("Link: " + data.tracks.items[0].preview_url.white));
+        console.log(colors.yellow("Album: " + data.tracks.items[0].album.name.white));
+        console.log(colors.yellow("Release Date: " + data.tracks.items[0].album.release_date.white));
+
+       var songLog = "\n*******Song Log******** " + 
+       "\nArtist: " + data.tracks.items[0].artists[0].name +
+       "\nSong: " + data.tracks.items[0].name +
+       "\nLink: " + data.tracks.items[0].preview_url +
+       "\nAlbum: " + data.tracks.items[0].album.name +
+       "\nRelease Date: " + data.tracks.items[0].album.release_date +
+       "\n*******End Of Log*******";
+
+       fs.appendFile("log.txt", songLog, function(err) {
+           if(err) {
+               throw err;
+           }
+       });
+    });
+}
+
+
+
+// Movie information
+
+function movieInformation(userInput) {
+    if(!userInput){
+        userInput = "Mr Nobody";
+    }
+    var queryUrl = "http://www.omdbapi.com/?t=" + userInput + "&y=&plot=short&apikey=trilogy";
+    console.log(colors.red(queryUrl));
+    axios.request(queryUrl).then(function(response) {
+        // return console.log(colors.red("Error occurred: " + error));
+        console.log(colors.green("\-----------------------------\n"));
+        console.log(colors.yellow("Title: " + response.data.Title.white + "\r\n"));
+        console.log(colors.yellow("Year: " + response.data.Year.white + "\r\n"));
+        console.log(colors.yellow("IMDB Rating: " + response.data.imdbRating.white + "\r\n"));
+        console.log(colors.yellow("Rotten Tomatoes Rating: " + response.data.Ratings[1].value + "\r\n"));
+        console.log(colors.yellow("Country: " + response.data.Country.white + "\r\n"));
+        console.log(colors.yellow("Language: " + response.data.Language.white + "\r\n"));
+        console.log(colors.yellow("Plot: " + response.data.Plot.white + "\r\n"));
+        console.log(colors.yellow("Actors: " + response.data.Actors.white + "\r\n"));
+        // return console.log(colors.red("Error occurred: " + error));
+
+        var movieLog = "\n*******movie Log******** " + 
+        "\nTitle: " + response.data.Title +  
+        "\nYear: " + response.data.Year +
+        "\nIMDB Rating: " + response.data.imdbRating + 
+        "\nRotten Tomatoes Rating: " + response.data.Ratings[1].value +
+        "\nRotten Tomatoes Rating: " + response.data.Ratings[1].value +
+        "\nCountry: " + response.data.Country +
+        "\nLanguage: " + response.data.Language +
+        "\nPlot: " + response.data.Plot +
+        "\nActors: " + response.data.Actors +
+        "\n*******End Of Log*******";
+
+        fs.appendFile("log.txt", movieLog, function(err) {
+            if(err) {
+                throw err;
             }
+        });
+    });
+}
+
+function saySomething(userInput) {
+    fs.appendFile("random.txt", "utf8", function(err, data) {
+        if(err) {
+            return console.log(colors.red("err"));
         }
     })
 }
 
-
-
-
-
-function spotifyThisSong(argv1) {
-    if(argv2 === error) {
-        argv2 = "The Sign";
-    }
-    spotify.search({ type: 'track', query: argv1 }, function(err, data) {
-        if (err) {
-          return console.log('Error occurred: ' + err);
-        }
-        var spotifySong = data;
-        for(var i = 0; i < spotifySong.lenght; i++) {
-            fs.appendFile("log.txt" + spotifySong[i].name + "\n");
-            console.log("The song's name " + spotifySong[i].name);
-            fs.appendFile("log.txt" + spotifySong[i].artist + "\n");
-            console.log("Artist Name " + spotifySong[i].artist);
-            fs.appendFile("log.txt" + spotifySong[i].preview_url + "\n");
-            console.log("Preview song link " + spotifySong[i].preview_url);
-            fs.appendFile("log.txt" + spotifySong[i].album + "\n");
-            console.log("The Album " + spotifySong[i].album);
-        }
-       
-      console.log(data); 
-      });
-};
-
-
-
-
-
-function movieThis() {
-    if(argv2 === error) {
-        argv2 = "Mr Nobody";
-    }
-    var movieName = "";
-    var queryUrl = "http://www.omdbapi.com/?t=" + argv2 + "&y=&plot=short&apikey=trilogy";
-    console.log(queryUrl);
-    axios.get(queryUrl).then(function(){
-       if(error.response) {
-           movieName = JSON.stringify();
-           fs.appendFile("log.txt" + movieName.Title + "\n");
-           console.log("Title " + movieName+Title);
-           fs.appendFile("log.txt" + movieName.Year + "\n");
-           console.log("Movie Year " + movieName.Year);
-           fs.appendFile("log.txt" + movieName.imdbRating + "\n");
-           console.log("iMDB Movie Rating " + movieName.imdbRating);
-           fs.appendFile("log.txt" + movieName.rottenTomatoesRating + "\n");
-           console.log("Rotten Tomatoe's Rating of this Movie " + movieName.rottenTomatoesRating);
-           fs.appendFile("log.txt" + movieName.Country + "\n");
-           console.log("Country Wher The Movie Was Produced " + movieName.Country);
-           fs.appendFile("log.txt" + movieName.Language + "\n");
-           console.log("Language Of The Movie " + movieName.Country);
-           fs.appendFile("log.txt" + movieName.Plot + "\n");
-           console.log("Plot Of The Movie " + movieName.Plot);
-           fs.appendFile("log.txt" + movieName.Actors + "\n");
-           console.log("Actors Of This Movie " + movieName.Actors);
-       } 
-    })
-
-};
-
-// * Title of the movie.
-// * Year the movie came out.
-// * IMDB Rating of the movie.
-// * Rotten Tomatoes Rating of the movie.
-// * Country where the movie was produced.
-// * Language of the movie.
-// * Plot of the movie.
-// * Actors in the movie.
-
-
-
-
-function doWhatItSays() {
-
-};
-
-
-
+input(userChoice, userInput);
